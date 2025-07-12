@@ -18,7 +18,7 @@
 
 void doUpdates(void)
 {
-  #define CURRENT_DATA_VERSION    24
+  #define CURRENT_DATA_VERSION    25
   //Only the latest update for small flash devices must be retained
    #ifndef SMALL_FLASH_MODE
 
