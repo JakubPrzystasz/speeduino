@@ -558,8 +558,11 @@ void readTPS(bool useFilter)
   if(true == configPage9.disableOnCTPS && true == currentStatus.CTPSActive)
   {
     currentStatus.TPS = 0;
+    BIT_SET(currentStatus.status5, BIT_STATUS5_CTPS_DISABLE);
     return;
   }
+
+  BIT_CLEAR(currentStatus.status5, BIT_STATUS5_CTPS_DISABLE);
 
   uint8_t tempTPS = (uint8_t)fastMap10Bit(readAnalogSensor(pinTPS), 0U, 255U); //Get the current raw TPS ADC value and map it into a uint8_t
 

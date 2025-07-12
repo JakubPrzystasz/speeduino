@@ -166,7 +166,7 @@
 #define BIT_STATUS5_KNOCK_ACTIVE   3
 #define BIT_STATUS5_KNOCK_PULSE    4
 #define BIT_STATUS5_FUEL_PUMP      5
-#define BIT_STATUS5_UNUSED7        6
+#define BIT_STATUS5_CTPS_DISABLE   6
 #define BIT_STATUS5_UNUSED8        7
 
 #define BIT_TIMER_1HZ             0
