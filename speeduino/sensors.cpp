@@ -543,7 +543,24 @@ uint32_t getMAPDeltaTime(void) {
 
 void readTPS(bool useFilter)
 {
+  //Check whether the closed throttle position sensor is active
+  if(configPage2.CTPSEnabled == true)
+  {
+    if(configPage2.CTPSPolarity == 0U) { currentStatus.CTPSActive = !digitalRead(pinCTPS); } //Normal mode (ground switched)
+    else { currentStatus.CTPSActive = digitalRead(pinCTPS); } //Inverted mode (5v activates closed throttle position sensor)
+  }
+  else { currentStatus.CTPSActive = 0; }
+
+  // Save last TPS state
   currentStatus.TPSlast = currentStatus.TPS;
+
+  //Disable TPS reading when CTPS is active
+  if(true == configPage9.disableOnCTPS && true == currentStatus.CTPSActive)
+  {
+    currentStatus.TPS = 0;
+    return;
+  }
+
   uint8_t tempTPS = (uint8_t)fastMap10Bit(readAnalogSensor(pinTPS), 0U, 255U); //Get the current raw TPS ADC value and map it into a uint8_t
 
   //The use of the filter can be overridden if required. This is used on startup to disable priming pulse if flood clear is wanted
@@ -570,14 +587,6 @@ void readTPS(bool useFilter)
     tempADC = clamp(tempADC, tempTPSMin, tempTPSMax);
     currentStatus.TPS = map(tempADC, tempTPSMin, tempTPSMax, 0, 200);
   }
-
-  //Check whether the closed throttle position sensor is active
-  if(configPage2.CTPSEnabled == true)
-  {
-    if(configPage2.CTPSPolarity == 0U) { currentStatus.CTPSActive = !digitalRead(pinCTPS); } //Normal mode (ground switched)
-    else { currentStatus.CTPSActive = digitalRead(pinCTPS); } //Inverted mode (5v activates closed throttle position sensor)
-  }
-  else { currentStatus.CTPSActive = 0; }
 }
 
 void readCLT(bool useFilter)

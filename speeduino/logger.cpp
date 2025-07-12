@@ -175,6 +175,8 @@ byte getTSLogEntry(uint16_t byteNum)
     case 128: statusValue = currentStatus.knockCount; break;
     case 129: statusValue = currentStatus.knockRetard; break;
     case 130: statusValue = lowByte(currentStatus.OILT + CALIBRATION_TEMPERATURE_OFFSET); break; //oiltemp
+    case 131: statusValue = lowByte(currentStatus.CTPSActive); break; //CTPS
+    
     default: statusValue = 0; // MISRA check
   }
 

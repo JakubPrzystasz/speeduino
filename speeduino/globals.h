@@ -1168,6 +1168,7 @@ struct config9 {
   byte dfcoTaperFuel;
   byte dfcoTaperAdvance;
   byte dfcoTaperEnable : 1;
+  byte disableOnCTPS : 1;
   byte unused10_183 : 6;
 
   byte unused10_184;
