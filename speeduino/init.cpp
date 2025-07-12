@@ -1248,20 +1248,39 @@ void initialiseAll(void)
         break;
     }
 
-    knockSchedule1.pStartCallback = beginKnockSensor1;
-    knockSchedule1.pEndCallback = endKnockSensor1;
+    if(KNOCK_MODE_TPIC == configPage10.knock_mode)
+    {
+      knockSchedule1.pStartCallback = beginKnockSensor1;
+      knockSchedule1.pEndCallback = endKnockSensor1;
 
-    knockSchedule2.pStartCallback = beginKnockSensor2;
-    knockSchedule2.pEndCallback = endKnockSensor2;
-    
-    knockSchedule3.pStartCallback = beginKnockSensor3;
-    knockSchedule3.pEndCallback = endKnockSensor3;
-    
-    knockSchedule4.pStartCallback = beginKnockSensor4;
-    knockSchedule4.pEndCallback = endKnockSensor4;
-    
-    knockSchedule5.pStartCallback = beginKnockSensor5;
-    knockSchedule5.pEndCallback = endKnockSensor5;
+      knockSchedule2.pStartCallback = beginKnockSensor2;
+      knockSchedule2.pEndCallback = endKnockSensor2;
+      
+      knockSchedule3.pStartCallback = beginKnockSensor3;
+      knockSchedule3.pEndCallback = endKnockSensor3;
+      
+      knockSchedule4.pStartCallback = beginKnockSensor4;
+      knockSchedule4.pEndCallback = endKnockSensor4;
+      
+      knockSchedule5.pStartCallback = beginKnockSensor5;
+      knockSchedule5.pEndCallback = endKnockSensor5;
+    }else{
+      knockSchedule1.pStartCallback = nullCallback;
+      knockSchedule1.pEndCallback = nullCallback;
+
+      knockSchedule2.pStartCallback = nullCallback;
+      knockSchedule2.pEndCallback = nullCallback;
+      
+      knockSchedule3.pStartCallback = nullCallback;
+      knockSchedule3.pEndCallback = nullCallback;
+      
+      knockSchedule4.pStartCallback = nullCallback;
+      knockSchedule4.pEndCallback = nullCallback;
+      
+      knockSchedule5.pStartCallback = nullCallback;
+      knockSchedule5.pEndCallback = nullCallback;
+    }
+
 
     //Begin priming the fuel pump. This is turned off in the low resolution, 1s interrupt in timers.ino
     //First check that the priming time is not 0
@@ -2898,7 +2917,10 @@ void setPinMapping(byte boardID)
     if( (LED_BUILTIN != SCK) && (LED_BUILTIN != MOSI) && (LED_BUILTIN != MISO) ) pinMode(LED_BUILTIN, OUTPUT); //This is required on as the LED pin can otherwise be reset to an input
   }
 
-  initTPIC8101();
+  if(KNOCK_MODE_TPIC == configPage10.knock_mode)
+  {
+    initTPIC8101();
+  }
 
 //CS pin number is now set in a compile flag. 
 // #ifdef USE_SPI_EEPROM
