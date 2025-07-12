@@ -72,6 +72,7 @@ void construct2dTables(void) {
   construct2dTable(cltCalibrationTable,       _countof(cltCalibration_values), cltCalibration_values, cltCalibration_bins);
   construct2dTable(iatCalibrationTable,       _countof(iatCalibration_values), iatCalibration_values, iatCalibration_bins);
   construct2dTable(o2CalibrationTable,        _countof(o2Calibration_values),  o2Calibration_values,  o2Calibration_bins);
+  construct2dTable(oiltCalibrationTable,       _countof(oiltCalibration_values), oiltCalibration_values, oiltCalibration_bins);
 }
 
 /** Initialise Speeduino for the main loop.
@@ -2313,7 +2314,7 @@ void setPinMapping(byte boardID)
       pinCTPS = A11;
       pinOilPressure = A4;
       pinFuelPressure = A3;
-      // pinOILT = A5; //OILT sensor pin
+      pinOILT = A5; //OILT sensor pin
 
       pinResetControl = 49; //Reset control output placeholder
 
@@ -2901,6 +2902,7 @@ void setPinMapping(byte boardID)
     pinMode(pinO2_2, INPUT_DISABLE);
     pinMode(pinTPS, INPUT_DISABLE);
     pinMode(pinIAT, INPUT_DISABLE);
+    pinMode(pinOILT, INPUT_DISABLE);
     pinMode(pinCLT, INPUT_DISABLE);
     pinMode(pinBat, INPUT_DISABLE);
     pinMode(pinBaro, INPUT_DISABLE);

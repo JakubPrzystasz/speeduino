@@ -213,6 +213,7 @@
 // Some code relies on TOOTH_LOG_SIZE being uint8_t.
 static_assert(TOOTH_LOG_SIZE<UINT8_MAX, "Check all uses of TOOTH_LOG_SIZE");
 
+#define OILT_CALIBRATION_PAGE 3U
 #define O2_CALIBRATION_PAGE   2U
 #define IAT_CALIBRATION_PAGE  1U
 #define CLT_CALIBRATION_PAGE  0U
@@ -605,6 +606,8 @@ struct statuses {
   uint16_t cltADC;
   int IAT;     /**< Inlet air temperature reading */
   uint16_t iatADC;
+  int OILT;     /**< Oil temperature reading */
+  uint16_t oiltADC;
   uint16_t O2ADC;
   uint16_t O2_2ADC;
   uint16_t dwell;          ///< dwell (coil primary winding/circuit on) time (in ms * 10 ? See @ref correctionsDwell)
@@ -1504,6 +1507,7 @@ extern byte pinMAP; //MAP sensor pin
 extern byte pinEMAP; //EMAP sensor pin
 extern byte pinMAP2; //2nd MAP sensor (Currently unused)
 extern byte pinIAT; //IAT sensor pin
+extern byte pinOILT; //OILT sensor pin
 extern byte pinCLT; //CLS sensor pin
 extern byte pinO2; //O2 Sensor pin
 extern byte pinO2_2; //second O2 pin
@@ -1587,6 +1591,10 @@ extern uint8_t  o2Calibration_values[32]; // Note 8-bit values
 extern struct table2D cltCalibrationTable; /**< A 32 bin array containing the coolant temperature sensor calibration values */
 extern struct table2D iatCalibrationTable; /**< A 32 bin array containing the inlet air temperature sensor calibration values */
 extern struct table2D o2CalibrationTable; /**< A 32 bin array containing the O2 sensor calibration values */
+
+extern struct table2D oiltCalibrationTable; /**< A 32 bin array containing the coolant temperature sensor calibration values */
+extern uint16_t oiltCalibration_bins[32];
+extern uint16_t oiltCalibration_values[32];
 
 bool pinIsOutput(byte pin);
 bool pinIsUsed(byte pin);

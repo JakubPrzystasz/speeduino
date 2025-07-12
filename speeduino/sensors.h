@@ -48,6 +48,7 @@ uint16_t readAuxanalog(uint8_t analogPin);
 uint16_t readAuxdigital(uint8_t digitalPin);
 void readCLT(bool useFilter=true); //Allows the option to override the use of the filter
 void readIAT(void);
+void readOILT(void);
 void readO2(void);
 void readBat(void);
 void readBaro(void);

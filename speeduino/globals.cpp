@@ -176,6 +176,7 @@ byte pinMAP;      //MAP sensor pin
 byte pinEMAP;     //EMAP sensor pin
 byte pinMAP2;     //2nd MAP sensor (Currently unused)
 byte pinIAT;      //IAT sensor pin
+byte pinOILT;      //OILT sensor pin
 byte pinCLT;      //CLS sensor pin
 byte pinO2;       //O2 Sensor pin
 byte pinO2_2;     //second O2 pin
@@ -255,6 +256,10 @@ struct table2D iatCalibrationTable;
 uint16_t o2Calibration_bins[32];
 uint8_t o2Calibration_values[32];
 struct table2D o2CalibrationTable; 
+
+uint16_t oiltCalibration_bins[32];
+uint16_t oiltCalibration_values[32];
+struct table2D oiltCalibrationTable;
 
 //These function do checks on a pin to determine if it is already in use by another (higher importance) active function
 bool pinIsOutput(byte pin)

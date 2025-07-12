@@ -596,6 +596,12 @@ void readIAT(void)
   currentStatus.IAT = table2D_getValue(&iatCalibrationTable, currentStatus.iatADC) - CALIBRATION_TEMPERATURE_OFFSET;
 }
 
+void readOILT(void)
+{
+  currentStatus.oiltADC = LOW_PASS_FILTER(readAnalogSensor(pinOILT), configPage4.ADCFILTER_CLT, currentStatus.oiltADC);
+  currentStatus.OILT = table2D_getValue(&oiltCalibrationTable, currentStatus.oiltADC) - CALIBRATION_TEMPERATURE_OFFSET;
+}
+
 // ========================================== Baro ==========================================
 
 /* 

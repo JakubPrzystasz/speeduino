@@ -104,7 +104,10 @@
  * | 3283       |1           | boostControlEnableThreshold          |                                    |
  * | 3284       |14          | A/C Control Settings                 |                                    |
  * | 3298       |159         | Page 15 spare                        |                                    |
- * | 3457       |217         | EMPTY                                |                                    |
+ * | 3457       |82          | EMPTY                                |                                    |
+ * | 3542       |4           | OILT Calibration CRC32               |                                    |
+ * | 3546       |64          | OILT Calibration Bins                | @ref EEPROM_CALIBRATION_OILT_BINS  |
+ * | 3610       |64          | OILT Calibration Values              | @ref EEPROM_CALIBRATION_OILT_VALUES|
  * | 3674       |4           | CLT Calibration CRC32                |                                    |
  * | 3678       |4           | IAT Calibration CRC32                |                                    |
  * | 3682       |4           | O2 Calibration CRC32                 |                                    |
@@ -186,7 +189,7 @@ extern uint32_t deferEEPROMWritesUntil;
 #define EEPROM_CONFIG15_START 3281
 #define EEPROM_CONFIG15_END   3457
 
-
+#define EEPROM_CALIBRATION_OILT_CRC 3542
 #define EEPROM_CALIBRATION_CLT_CRC  3674
 #define EEPROM_CALIBRATION_IAT_CRC  3678
 #define EEPROM_CALIBRATION_O2_CRC   3682

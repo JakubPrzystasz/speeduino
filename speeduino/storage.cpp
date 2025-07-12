@@ -33,6 +33,9 @@ A full copy of the license may be found in the projects root directory
 #define EEPROM_CALIBRATION_O2_BINS    (EEPROM_CALIBRATION_O2_VALUES-sizeof(o2Calibration_bins))
 #define EEPROM_LAST_BARO              (EEPROM_CALIBRATION_O2_BINS-1)
 
+#define EEPROM_CALIBRATION_OILT_VALUES  3610
+#define EEPROM_CALIBRATION_OILT_BINS    3546
+
 
 uint32_t deferEEPROMWritesUntil = 0;
 
@@ -499,6 +502,9 @@ void loadCalibration(void)
 
   EEPROM.get(EEPROM_CALIBRATION_CLT_BINS, cltCalibration_bins);
   EEPROM.get(EEPROM_CALIBRATION_CLT_VALUES, cltCalibration_values);
+
+  EEPROM.get(EEPROM_CALIBRATION_OILT_BINS, oiltCalibration_bins);
+  EEPROM.get(EEPROM_CALIBRATION_OILT_VALUES, oiltCalibration_values);
 }
 
 /** Write calibration tables to EEPROM.
@@ -518,6 +524,9 @@ void writeCalibration(void)
 
   EEPROM.put(EEPROM_CALIBRATION_CLT_BINS, cltCalibration_bins);
   EEPROM.put(EEPROM_CALIBRATION_CLT_VALUES, cltCalibration_values);
+
+  EEPROM.put(EEPROM_CALIBRATION_OILT_BINS, oiltCalibration_bins);
+  EEPROM.put(EEPROM_CALIBRATION_OILT_VALUES, oiltCalibration_values);
 }
 
 void writeCalibrationPage(uint8_t pageNum)
@@ -536,6 +545,11 @@ void writeCalibrationPage(uint8_t pageNum)
   {
     EEPROM.put(EEPROM_CALIBRATION_CLT_BINS, cltCalibration_bins);
     EEPROM.put(EEPROM_CALIBRATION_CLT_VALUES, cltCalibration_values);
+  }
+  else if(pageNum == OILT_CALIBRATION_PAGE)
+  {
+    EEPROM.put(EEPROM_CALIBRATION_OILT_BINS, oiltCalibration_bins);
+    EEPROM.put(EEPROM_CALIBRATION_OILT_VALUES, oiltCalibration_values);
   }
 }
 
