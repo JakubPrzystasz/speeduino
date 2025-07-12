@@ -155,7 +155,7 @@ void __attribute__((always_inline)) loop(void)
       if(currentStatus.RPM > 0)
       {
         FUEL_PUMP_ON();
-        currentStatus.fuelPumpOn = true;
+        BIT_SET(currentStatus.status5, BIT_STATUS5_FUEL_PUMP);
       }
     }
     else
@@ -177,7 +177,7 @@ void __attribute__((always_inline)) loop(void)
       ignitionCount = 0;
       ignitionChannelsOn = 0;
       fuelChannelsOn = 0;
-      if (currentStatus.fpPrimed == true) { FUEL_PUMP_OFF(); currentStatus.fuelPumpOn = false; } //Turn off the fuel pump, but only if the priming is complete
+      if (currentStatus.fpPrimed == true) { FUEL_PUMP_OFF(); BIT_CLEAR(currentStatus.status5, BIT_STATUS5_FUEL_PUMP); } //Turn off the fuel pump, but only if the priming is complete
       if (configPage6.iacPWMrun == false) { disableIdle(); } //Turn off the idle PWM
       BIT_CLEAR(currentStatus.engine, BIT_ENGINE_CRANK); //Clear cranking bit (Can otherwise get stuck 'on' even with 0 rpm)
       BIT_CLEAR(currentStatus.engine, BIT_ENGINE_WARMUP); //Same as above except for WUE

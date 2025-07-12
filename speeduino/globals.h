@@ -165,7 +165,7 @@
 #define BIT_STATUS5_SPARK2_ACTIVE  2
 #define BIT_STATUS5_KNOCK_ACTIVE   3
 #define BIT_STATUS5_KNOCK_PULSE    4
-#define BIT_STATUS5_UNUSED6        5
+#define BIT_STATUS5_FUEL_PUMP      5
 #define BIT_STATUS5_UNUSED7        6
 #define BIT_STATUS5_UNUSED8        7
 
@@ -674,7 +674,6 @@ struct statuses {
   int16_t fuelLoad2;
   int16_t ignLoad;
   int16_t ignLoad2;
-  bool fuelPumpOn; /**< Indicator showing the current status of the fuel pump */
   volatile byte syncLossCounter;
   byte knockRetard;
   volatile byte knockCount;

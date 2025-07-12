@@ -293,7 +293,7 @@ void oneMSInterval(void) //Most ARM chips can simply call a function
         {
           //If we reach here then the priming is complete, however only turn off the fuel pump if the engine isn't running
           digitalWrite(pinFuelPump, LOW);
-          currentStatus.fuelPumpOn = false;
+          BIT_CLEAR(currentStatus.status5, BIT_STATUS5_FUEL_PUMP);
         }
       }
     }
