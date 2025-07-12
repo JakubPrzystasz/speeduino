@@ -64,6 +64,13 @@ IgnitionSchedule ignitionSchedule7(IGN7_COUNTER, IGN7_COMPARE, IGN7_TIMER_DISABL
 IgnitionSchedule ignitionSchedule8(IGN8_COUNTER, IGN8_COMPARE, IGN8_TIMER_DISABLE, IGN8_TIMER_ENABLE);
 #endif
 
+KnockSchedule knockSchedule1(KNOCK1_COUNTER, KNOCK1_COMPARE, KNOCK1_TIMER_DISABLE, KNOCK1_TIMER_ENABLE);
+KnockSchedule knockSchedule2(KNOCK2_COUNTER, KNOCK2_COMPARE, KNOCK2_TIMER_DISABLE, KNOCK2_TIMER_ENABLE);
+KnockSchedule knockSchedule3(KNOCK3_COUNTER, KNOCK3_COMPARE, KNOCK3_TIMER_DISABLE, KNOCK3_TIMER_ENABLE);
+KnockSchedule knockSchedule4(KNOCK4_COUNTER, KNOCK4_COMPARE, KNOCK4_TIMER_DISABLE, KNOCK4_TIMER_ENABLE);
+KnockSchedule knockSchedule5(KNOCK5_COUNTER, KNOCK5_COMPARE, KNOCK5_TIMER_DISABLE, KNOCK5_TIMER_ENABLE);
+
+
 static void reset(FuelSchedule &schedule) 
 {
     schedule.Status = OFF;
@@ -75,6 +82,13 @@ static void reset(IgnitionSchedule &schedule)
     schedule.Status = OFF;
     schedule.pTimerEnable();
 }
+
+static void reset(KnockSchedule &schedule) 
+{
+    schedule.Status = OFF;
+    schedule.pTimerEnable();
+}
+
 
 void initialiseSchedulers()
 {
@@ -112,6 +126,23 @@ void initialiseSchedulers()
 #if IGN_CHANNELS >= 8
     reset(ignitionSchedule8);
 #endif
+
+    reset(knockSchedule1);
+    reset(knockSchedule2);
+    reset(knockSchedule3);
+    reset(knockSchedule4);
+    reset(knockSchedule5);
+
+  knockSchedule1.pStartCallback = nullCallback;
+  knockSchedule1.pEndCallback = nullCallback;
+  knockSchedule2.pStartCallback = nullCallback;
+  knockSchedule2.pEndCallback = nullCallback;
+  knockSchedule3.pStartCallback = nullCallback;
+  knockSchedule3.pEndCallback = nullCallback;
+  knockSchedule4.pStartCallback = nullCallback;
+  knockSchedule4.pEndCallback = nullCallback;
+  knockSchedule5.pStartCallback = nullCallback;
+  knockSchedule5.pEndCallback = nullCallback;
 
   fuelSchedule1.pStartFunction = nullCallback;
   fuelSchedule1.pEndFunction = nullCallback;
@@ -208,6 +239,65 @@ void initialiseSchedulers()
 	channel8InjDegrees = 0; /**< The number of crank degrees until cylinder 8 is at TDC */
 #endif
 
+  knockSchedule1.pStartCallback = nullCallback;
+  knockSchedule1.pEndCallback = nullCallback;
+  knock1StartAngle=0;
+  knock1EndAngle=0;
+  channel1IgnDegrees=0; /**< The number of crank degrees until cylinder 1 is at TDC (This is obviously 0 for virtually ALL engines, but there's some weird ones) */
+
+  knockSchedule2.pStartCallback = nullCallback;
+  knockSchedule2.pEndCallback = nullCallback;
+  knock2StartAngle=0;
+  knock2EndAngle=0;
+  channel2IgnDegrees=0; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+  knockSchedule3.pStartCallback = nullCallback;
+  knockSchedule3.pEndCallback = nullCallback;
+  knock3StartAngle=0;
+  knock3EndAngle=0;
+  channel3IgnDegrees=0; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+  knockSchedule4.pStartCallback = nullCallback;
+  knockSchedule4.pEndCallback = nullCallback;
+  knock4StartAngle=0;
+  knock4EndAngle=0;
+  channel4IgnDegrees=0; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+  knockSchedule5.pStartCallback = nullCallback;
+  knockSchedule5.pEndCallback = nullCallback;
+  knock5StartAngle=0;
+  knock5EndAngle=0;
+  channel5IgnDegrees=0; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+}
+
+void _setKnockScheduleRunning(KnockSchedule &schedule, unsigned long timeout, unsigned long duration)
+{
+  //The duration of the dwell cannot be longer than the maximum timer period. This is unlikely as dwell timess should never get that long, but it's here for safety
+  if(duration >= MAX_TIMER_PERIOD) { schedule.duration = MAX_TIMER_PERIOD - 1; }
+  else { schedule.duration = duration; }
+
+  COMPARE_TYPE timeout_timer_compare = uS_TO_TIMER_COMPARE(timeout);
+
+  noInterrupts();
+  schedule.startCompare = schedule.counter + timeout_timer_compare; //As there is a tick every 4uS, there are timeout/4 ticks until the interrupt should be triggered ( >>2 divides by 4)
+  //if(schedule.endScheduleSetByDecoder == false) { schedule.endCompare = schedule.startCompare + uS_TO_TIMER_COMPARE(schedule.duration); } //The .endCompare value is also set by the per tooth timing in decoders.ino. The check here is so that it's not getting overridden. 
+  SET_COMPARE(schedule.compare, schedule.startCompare);
+  schedule.Status = PENDING; //Turn this schedule on
+  interrupts();
+  schedule.pTimerEnable();
+}
+
+void _setKnockScheduleNext(KnockSchedule &schedule, unsigned long timeout, unsigned long duration)
+{
+  //If the schedule is already running, we can set the next schedule so it is ready to go
+  //This is required in cases of high rpm and high DC where there otherwise would not be enough time to set the schedule
+  noInterrupts();
+  schedule.nextStartCompare = schedule.counter + uS_TO_TIMER_COMPARE(timeout);
+  if(duration >= MAX_TIMER_PERIOD) { schedule.duration = MAX_TIMER_PERIOD - 1; }
+  else { schedule.duration = duration; }
+  schedule.hasNextSchedule = true;
+  interrupts();
 }
 
 void _setFuelScheduleRunning(FuelSchedule &schedule, unsigned long timeout, unsigned long duration)
@@ -646,4 +736,67 @@ void disablePendingIgnSchedule(byte channel)
 #endif
   }
   interrupts();
+}
+
+// Shared ISR function for all knock timers.
+// This is completely inlined into the ISR - there is no function call
+// overhead.
+static inline __attribute__((always_inline)) void knockScheduleISR(KnockSchedule &schedule)
+{
+  if (schedule.Status == PENDING) //Check to see if this schedule is turn on
+  {
+    schedule.pStartCallback();
+    schedule.Status = RUNNING; //Set the status to be in progress (ie The start callback has been called, but not the end callback)
+    schedule.startTime = micros();
+    if(schedule.endScheduleSetByDecoder == true) { SET_COMPARE(schedule.compare, schedule.endCompare); }
+    else { SET_COMPARE(schedule.compare, schedule.counter + uS_TO_TIMER_COMPARE(schedule.duration) ); } //Doing this here prevents a potential overflow on restarts
+  }
+  else if (schedule.Status == RUNNING)
+  {
+    schedule.pEndCallback();
+    schedule.Status = OFF; //Turn off the schedule
+    schedule.endScheduleSetByDecoder = false;
+
+    //If there is a next schedule queued up, activate it
+    if(schedule.hasNextSchedule == true)
+    {
+      SET_COMPARE(schedule.compare, schedule.nextStartCompare);
+      schedule.Status = PENDING;
+      schedule.hasNextSchedule = false;
+    }
+    else
+    { 
+      schedule.pTimerDisable(); 
+    }
+  }
+  else if (schedule.Status == OFF)
+  {
+    //Catch any spurious interrupts. This really shouldn't ever be called, but there as a safety
+    schedule.pTimerDisable(); 
+  }
+}
+
+void knockSchedule1Interrupt(void)
+{
+  knockScheduleISR(knockSchedule1);
+}
+
+void knockSchedule2Interrupt(void)
+{
+  knockScheduleISR(knockSchedule2);
+}
+
+void knockSchedule3Interrupt(void)
+{
+  knockScheduleISR(knockSchedule3);
+}
+
+void knockSchedule4Interrupt(void)
+{
+  knockScheduleISR(knockSchedule4);
+}
+
+void knockSchedule5Interrupt(void)
+{
+  knockScheduleISR(knockSchedule5);
 }

@@ -101,3 +101,49 @@ inline void adjustCrankAngle(IgnitionSchedule &schedule, int endAngle, int crank
     schedule.endScheduleSetByDecoder = true; 
   }
 }
+
+
+static inline void calculateKnockAngle(const uint16_t offset_angle, const uint16_t window_angle, const int ignitionEndAngle, int *pEndAngle, int *pStartAngle)
+{
+  *pStartAngle = ignitionEndAngle + offset_angle;
+  if(*pStartAngle < 0) {*pStartAngle += CRANK_ANGLE_MAX_IGN;}
+
+  *pEndAngle = *pStartAngle + window_angle;
+  if(*pEndAngle > CRANK_ANGLE_MAX_IGN) {*pEndAngle -= CRANK_ANGLE_MAX_IGN;}
+}
+
+static inline uint16_t _adjustToKnockChannel(int angle, int channelKnockDegrees) 
+{
+  angle = angle - channelKnockDegrees;
+  if( angle < 0) { return angle + CRANK_ANGLE_MAX_IGN; }
+  return angle;
+}
+
+static inline uint32_t _calculateKnockTimeout(const KnockSchedule &schedule, int16_t startAngle, int16_t crankAngle) 
+{
+  int16_t delta = startAngle - crankAngle;
+  if (delta < 0)
+  {
+    if ((schedule.Status == RUNNING) && (delta>-CRANK_ANGLE_MAX_IGN)) 
+    { 
+      // Must be >0
+      delta = delta + CRANK_ANGLE_MAX_IGN; 
+    }
+    else
+    {
+      return 0U;
+    }
+  }
+
+  return angleToTimeMicroSecPerDegree(delta);
+}
+
+static inline uint32_t calculateKnockTimeout(const KnockSchedule &schedule, int startAngle, int channelIgnDegrees, int crankAngle)
+{
+  if (channelIgnDegrees == 0) 
+  {
+    // 1st channel
+      return _calculateKnockTimeout(schedule, startAngle, crankAngle);
+  }
+  return _calculateKnockTimeout(schedule, _adjustToKnockChannel(startAngle, channelIgnDegrees), _adjustToKnockChannel(crankAngle, channelIgnDegrees));
+}

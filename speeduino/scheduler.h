@@ -253,4 +253,72 @@ extern IgnitionSchedule ignitionSchedule7;
 extern IgnitionSchedule ignitionSchedule8;
 #endif
 
+/** Knock schedule.
+ */
+struct KnockSchedule {
+
+  // Deduce the real types of the counter and compare registers.
+  // COMPARE_TYPE is NOT the same - it's just an integer type wide enough to
+  // store 16-bit counter/compare calculation results.
+  using counter_t = decltype(KNOCK1_COUNTER);
+  using compare_t = decltype(KNOCK1_COMPARE);
+
+  KnockSchedule( counter_t &counter, compare_t &compare,
+            void (&_pTimerDisable)(), void (&_pTimerEnable)())
+  : counter(counter)
+  , compare(compare)
+  , pTimerDisable(_pTimerDisable)
+  , pTimerEnable(_pTimerEnable)
+  {
+  }
+
+  volatile unsigned long duration;///< Scheduled duration (uS ?)
+  volatile ScheduleStatus Status; ///< Schedule status: OFF, PENDING, STAGED, RUNNING
+  void (*pStartCallback)(void);        ///< Start Callback function for schedule
+  void (*pEndCallback)(void);          ///< End Callback function for schedule
+  volatile unsigned long startTime; /**< The system time (in uS) that the schedule started, used by the overdwell protection in timers.ino */
+  volatile COMPARE_TYPE startCompare; ///< The counter value of the timer when this will start
+  volatile COMPARE_TYPE endCompare;   ///< The counter value of the timer when this will end
+
+  COMPARE_TYPE nextStartCompare;      ///< Planned start of next schedule (when current schedule is RUNNING)
+  COMPARE_TYPE nextEndCompare;        ///< Planned end of next schedule (when current schedule is RUNNING)
+  volatile bool hasNextSchedule = false; ///< Enable flag for planned next schedule (when current schedule is RUNNING)
+  volatile bool endScheduleSetByDecoder = false;
+
+  counter_t &counter;  // Reference to the counter register. E.g. TCNT3
+  compare_t &compare;  // Reference to the compare register. E.g. OCR3A
+  void (&pTimerDisable)();    // Reference to the timer disable function
+  void (&pTimerEnable)();     // Reference to the timer enable function  
+};
+
+void _setKnockScheduleRunning(KnockSchedule &schedule, unsigned long timeout, unsigned long duration);
+void _setKnockScheduleNext(KnockSchedule &schedule, unsigned long timeout, unsigned long duration);
+
+inline __attribute__((always_inline)) void setKnockSchedule(KnockSchedule &schedule, unsigned long timeout, unsigned long duration) 
+{
+  if((timeout) < MAX_TIMER_PERIOD)
+  {
+    if(schedule.Status != RUNNING) 
+    { //Check that we're not already part way through a schedule
+      _setKnockScheduleRunning(schedule, timeout, duration);
+    }
+    // Check whether timeout exceeds the maximum future time. This can potentially occur on sequential setups when below ~115rpm
+    else if(angleToTimeMicroSecPerDegree(CRANK_ANGLE_MAX_IGN) < MAX_TIMER_PERIOD)
+    {
+      _setKnockScheduleNext(schedule, timeout, duration);
+    }
+  }
+}
+
+void knockSchedule1Interrupt(void);
+void knockSchedule2Interrupt(void);
+void knockSchedule3Interrupt(void);
+void knockSchedule4Interrupt(void);
+void knockSchedule5Interrupt(void);
+extern KnockSchedule knockSchedule1;
+extern KnockSchedule knockSchedule2;
+extern KnockSchedule knockSchedule3;
+extern KnockSchedule knockSchedule4;
+extern KnockSchedule knockSchedule5;
+
 #endif // SCHEDULER_H

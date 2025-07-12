@@ -21,6 +21,7 @@
 #include "idle.h"
 #include "table2d.h"
 #include "acc_mc33810.h"
+#include "tpic8101.h"
 #include BOARD_H //Note that this is not a real file, it is defined in globals.h. 
 #if defined(EEPROM_RESET_PIN)
   #include EEPROM_LIB_H
@@ -366,6 +367,24 @@ void initialiseAll(void)
 #if IGN_CHANNELS >= 8
     ignition8EndAngle = 0;
 #endif
+
+    knock1EndAngle = 0;
+    knock2EndAngle = 0;
+    knock3EndAngle = 0;
+    knock4EndAngle = 0;
+    knock5EndAngle = 0;
+
+    knock1StartAngle = 0;
+    knock2StartAngle = 0;
+    knock3StartAngle = 0;
+    knock4StartAngle = 0;
+    knock5StartAngle = 0;
+
+    channel1KnockDegrees = 0;
+    channel2KnockDegrees = 0;
+    channel3KnockDegrees = 0;
+    channel4KnockDegrees = 0;
+    channel5KnockDegrees = 0;
 
     if(configPage2.strokes == FOUR_STROKE) { CRANK_ANGLE_MAX_INJ = 720 / currentStatus.nSquirts; }
     else { CRANK_ANGLE_MAX_INJ = 360 / currentStatus.nSquirts; }
@@ -1228,6 +1247,21 @@ void initialiseAll(void)
         ignitionSchedule5.pEndCallback = endCoil5Charge;
         break;
     }
+
+    knockSchedule1.pStartCallback = beginKnockSensor1;
+    knockSchedule1.pEndCallback = endKnockSensor1;
+
+    knockSchedule2.pStartCallback = beginKnockSensor2;
+    knockSchedule2.pEndCallback = endKnockSensor2;
+    
+    knockSchedule3.pStartCallback = beginKnockSensor3;
+    knockSchedule3.pEndCallback = endKnockSensor3;
+    
+    knockSchedule4.pStartCallback = beginKnockSensor4;
+    knockSchedule4.pEndCallback = endKnockSensor4;
+    
+    knockSchedule5.pStartCallback = beginKnockSensor5;
+    knockSchedule5.pEndCallback = endKnockSensor5;
 
     //Begin priming the fuel pump. This is turned off in the low resolution, 1s interrupt in timers.ino
     //First check that the priming time is not 0
@@ -2857,11 +2891,14 @@ void setPinMapping(byte boardID)
     inj8_pin_mask = digitalPinToBitMask(pinInjector8);
   }
   
+  SPI.begin();
   if( (ignitionOutputControl == OUTPUT_CONTROL_MC33810) || (injectorOutputControl == OUTPUT_CONTROL_MC33810) )
   {
     initMC33810();
     if( (LED_BUILTIN != SCK) && (LED_BUILTIN != MOSI) && (LED_BUILTIN != MISO) ) pinMode(LED_BUILTIN, OUTPUT); //This is required on as the LED pin can otherwise be reset to an input
   }
+
+  initTPIC8101();
 
 //CS pin number is now set in a compile flag. 
 // #ifdef USE_SPI_EEPROM

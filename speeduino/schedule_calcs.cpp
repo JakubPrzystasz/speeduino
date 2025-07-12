@@ -55,3 +55,22 @@ int channel8InjDegrees; /**< The number of crank degrees until cylinder 8 is at 
 #endif
 
 
+int knock1StartAngle;
+int knock1EndAngle;
+int channel1KnockDegrees; /**< The number of crank degrees until cylinder 1 is at TDC (This is obviously 0 for virtually ALL engines, but there's some weird ones) */
+
+int knock2StartAngle;
+int knock2EndAngle;
+int channel2KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+int knock3StartAngle;
+int knock3EndAngle;
+int channel3KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+int knock4StartAngle;
+int knock4EndAngle;
+int channel4KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+int knock5StartAngle;
+int knock5EndAngle;
+int channel5KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */

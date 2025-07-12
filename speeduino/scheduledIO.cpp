@@ -3,6 +3,8 @@
 #include "globals.h"
 #include "timers.h"
 #include "acc_mc33810.h"
+#include "tpic8101.h"
+
 /** @file
  * Injector and Coil (toggle/open/close) control (under various situations, eg with particular cylinder count, rotary engine type or wasted spark ign, etc.).
  * Also accounts for presence of MC33810 injector/ignition (dwell, etc.) control circuit.
@@ -96,6 +98,23 @@ void endCoil7Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810) 
 
 void beginCoil8Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810) { coil8Charging_DIRECT(); } else { coil8Charging_MC33810(); } tachoOutputOn(); }
 void endCoil8Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810) { coil8StopCharging_DIRECT(); } else { coil8StopCharging_MC33810(); } tachoOutputOff(); }
+
+volatile uint32_t start_time;
+void beginKnockSensor1(void) { start_time = micros(); digitalWrite(INT_HOLD_PIN, HIGH); }
+void endKnockSensor1(void) { currentStatus.knockWindowDuration = micros() - start_time;  digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel1 = currentStatus.knockLevel = tpic8101_read(); }
+
+void beginKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
+void endKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel2 = currentStatus.knockLevel = tpic8101_read(); }
+
+void beginKnockSensor3(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
+void endKnockSensor3(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel3 = currentStatus.knockLevel = tpic8101_read(); }
+
+void beginKnockSensor4(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
+void endKnockSensor4(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel4 = currentStatus.knockLevel = tpic8101_read(); }
+
+void beginKnockSensor5(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
+void endKnockSensor5(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel5 = currentStatus.knockLevel = tpic8101_read(); }
+
 
 //The below 3 calls are all part of the rotary ignition mode
 void beginTrailingCoilCharge(void) { beginCoil2Charge(); }

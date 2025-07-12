@@ -25,6 +25,8 @@ volatile PINMASK_TYPE mc33810_1_pin_mask;
 volatile PORT_TYPE *mc33810_2_pin_port;
 volatile PINMASK_TYPE mc33810_2_pin_mask;
 
+SPISettings mc33810_spi_settings(6000000, MSBFIRST, SPI_MODE0);
+
 void initMC33810(void)
 {
     //Set pin port/masks
@@ -42,9 +44,7 @@ void initMC33810(void)
     pinMode(pinMC33810_1_CS, OUTPUT);
     pinMode(pinMC33810_2_CS, OUTPUT);
 
-    SPI.begin();
-    //These are the SPI settings per the datasheet
-	SPI.beginTransaction(SPISettings(6000000, MSBFIRST, SPI_MODE0)); 
+	SPI.beginTransaction(mc33810_spi_settings); 
 
     //Set the ignition outputs to GPGD mode
     /*
@@ -80,4 +80,5 @@ void initMC33810(void)
     SPI.transfer16(cmd);
     MC33810_2_INACTIVE();
     
+    SPI.endTransaction();
 }

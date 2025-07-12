@@ -68,4 +68,27 @@ static inline void __attribute__((always_inline))  calculateIgnitionTrailingRota
 
 static inline uint32_t __attribute__((always_inline)) calculateIgnitionTimeout(const IgnitionSchedule &schedule, int startAngle, int channelIgnDegrees, int crankAngle);
 
+extern int knock1StartAngle;
+extern int knock1EndAngle;
+extern int channel1KnockDegrees; /**< The number of crank degrees until cylinder 1 is at TDC (This is obviously 0 for virtually ALL engines, but there's some weird ones) */
+
+extern int knock2StartAngle;
+extern int knock2EndAngle;
+extern int channel2KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+extern int knock3StartAngle;
+extern int knock3EndAngle;
+extern int channel3KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+extern int knock4StartAngle;
+extern int knock4EndAngle;
+extern int channel4KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+extern int knock5StartAngle;
+extern int knock5EndAngle;
+extern int channel5KnockDegrees; /**< The number of crank degrees until cylinder 2 (and 5/6/7/8) is at TDC */
+
+static inline void __attribute__((always_inline)) calculateKnockAngle(const uint16_t offset_angle, const uint16_t window_angle, const int ignitionEndAngle, int *pEndAngle, int *pStartAngle);
+
+
 #include "schedule_calcs.hpp"

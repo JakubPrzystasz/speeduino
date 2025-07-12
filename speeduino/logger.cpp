@@ -174,8 +174,21 @@ byte getTSLogEntry(uint16_t byteNum)
     case 127: statusValue = currentStatus.status5; break;
     case 128: statusValue = currentStatus.knockCount; break;
     case 129: statusValue = currentStatus.knockRetard; break;
-    case 130: statusValue = lowByte(currentStatus.OILT + CALIBRATION_TEMPERATURE_OFFSET); break; //oiltemp
-    
+    case 130: statusValue = lowByte(currentStatus.OILT + CALIBRATION_TEMPERATURE_OFFSET); break; //oil temperature
+    case 131: statusValue = lowByte(currentStatus.knockLevel); break; 
+    case 132: statusValue = highByte(currentStatus.knockLevel); break; 
+    case 133: statusValue = lowByte(currentStatus.knockLevel1); break; 
+    case 134: statusValue = highByte(currentStatus.knockLevel1); break; 
+    case 135: statusValue = lowByte(currentStatus.knockLevel2); break; 
+    case 136: statusValue = highByte(currentStatus.knockLevel2); break; 
+    case 137: statusValue = lowByte(currentStatus.knockLevel3); break; 
+    case 138: statusValue = highByte(currentStatus.knockLevel3); break; 
+    case 139: statusValue = lowByte(currentStatus.knockLevel4); break; 
+    case 140: statusValue = highByte(currentStatus.knockLevel4); break; 
+    case 141: statusValue = lowByte(currentStatus.knockLevel5); break; 
+    case 142: statusValue = highByte(currentStatus.knockLevel5); break; 
+    case 143: statusValue = lowByte(currentStatus.knockWindowDuration); break; 
+    case 144: statusValue = highByte(currentStatus.knockWindowDuration); break;
     default: statusValue = 0; // MISRA check
   }
 

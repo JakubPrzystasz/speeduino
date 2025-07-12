@@ -69,8 +69,8 @@
     #define CORE_TEENSY41
     #define BOARD_H "board_teensy41.h"
   #endif
-  #define INJ_CHANNELS 8
-  #define IGN_CHANNELS 8
+  #define INJ_CHANNELS 5
+  #define IGN_CHANNELS 5
 
 #elif defined(STM32_MCU_SERIES) || defined(ARDUINO_ARCH_STM32) || defined(STM32)
   #define BOARD_H "board_stm32_official.h"
@@ -305,6 +305,7 @@ static_assert(TOOTH_LOG_SIZE<UINT8_MAX, "Check all uses of TOOTH_LOG_SIZE");
 #define KNOCK_MODE_OFF      0U
 #define KNOCK_MODE_DIGITAL  1U
 #define KNOCK_MODE_ANALOG   2U
+#define KNOCK_MODE_TPIC     3U
 
 #define KNOCK_TRIGGER_HIGH  0
 #define KNOCK_TRIGGER_LOW   1
@@ -698,6 +699,13 @@ struct statuses {
   byte outputsStatus;
   byte TS_SD_Status; //TunerStudios SD card status
   byte airConStatus;
+  uint16_t knockLevel;
+  uint16_t knockLevel1;
+  uint16_t knockLevel2;
+  uint16_t knockLevel3;
+  uint16_t knockLevel4;
+  uint16_t knockLevel5;
+  uint16_t knockWindowDuration;
 };
 
 /**
@@ -1398,7 +1406,11 @@ struct config13 {
 
   uint16_t candID[8]; ///< Actual CAN ID need 16bits, this is a placeholder
 
-  byte unused12_106_116[10];
+  byte knockGain;
+  byte knockFrequency;
+  byte knockThreshold;
+  byte knockWindow;
+  byte unused12_110_116[6];
 
   byte onboard_log_csv_separator :2;  //";", ",", "tab", "space"  
   byte onboard_log_file_style    :2;  // "Disabled", "CSV", "Binary", "INVALID" 

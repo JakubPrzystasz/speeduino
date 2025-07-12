@@ -6,6 +6,7 @@
 #include "scheduler.h"
 #include "timers.h"
 #include "comms_secondary.h"
+#include <SPI.h>
 
 /*
   //These are declared locally in comms_CAN now due to this issue: https://github.com/tonton81/FlexCAN_T4/issues/67
@@ -263,9 +264,9 @@ void TMR3_isr(void)
   bool interrupt4 = (TMR3_CSCTRL3 & TMR_CSCTRL_TCF1);
 
   if(interrupt1)      { TMR3_CSCTRL0 &= ~TMR_CSCTRL_TCF1; fuelSchedule5Interrupt(); }
-  else if(interrupt2) { TMR3_CSCTRL1 &= ~TMR_CSCTRL_TCF1; fuelSchedule6Interrupt(); }
-  else if(interrupt3) { TMR3_CSCTRL2 &= ~TMR_CSCTRL_TCF1; fuelSchedule7Interrupt(); }
-  else if(interrupt4) { TMR3_CSCTRL3 &= ~TMR_CSCTRL_TCF1; fuelSchedule8Interrupt(); }
+  else if(interrupt2) { TMR3_CSCTRL1 &= ~TMR_CSCTRL_TCF1; knockSchedule1Interrupt(); }
+  else if(interrupt3) { TMR3_CSCTRL2 &= ~TMR_CSCTRL_TCF1; knockSchedule2Interrupt(); }
+  else if(interrupt4) { TMR3_CSCTRL3 &= ~TMR_CSCTRL_TCF1; knockSchedule3Interrupt(); }
 }
 void TMR4_isr(void)
 {
@@ -276,9 +277,9 @@ void TMR4_isr(void)
   bool interrupt4 = (TMR4_CSCTRL3 & TMR_CSCTRL_TCF1);
 
   if(interrupt1)      { TMR4_CSCTRL0 &= ~TMR_CSCTRL_TCF1; ignitionSchedule5Interrupt(); }
-  else if(interrupt2) { TMR4_CSCTRL1 &= ~TMR_CSCTRL_TCF1; ignitionSchedule6Interrupt(); }
-  else if(interrupt3) { TMR4_CSCTRL2 &= ~TMR_CSCTRL_TCF1; ignitionSchedule7Interrupt(); }
-  else if(interrupt4) { TMR4_CSCTRL3 &= ~TMR_CSCTRL_TCF1; ignitionSchedule8Interrupt(); }
+  else if(interrupt2) { TMR4_CSCTRL1 &= ~TMR_CSCTRL_TCF1; knockSchedule4Interrupt(); }
+  else if(interrupt3) { TMR4_CSCTRL2 &= ~TMR_CSCTRL_TCF1; knockSchedule5Interrupt(); }
+  else if(interrupt4) { TMR4_CSCTRL2 &= ~TMR_CSCTRL_TCF1; }
 }
 
 uint16_t freeRam()

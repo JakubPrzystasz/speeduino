@@ -128,6 +128,21 @@ void coil8Toggle(void);
 void tachoOutputOn(void);
 void tachoOutputOff(void);
 
+void beginKnockSensor1(void);
+void endKnockSensor1(void);
+
+void beginKnockSensor2(void);
+void endKnockSensor2(void);
+
+void beginKnockSensor3(void);
+void endKnockSensor3(void);
+
+void beginKnockSensor4(void);
+void endKnockSensor4(void);
+
+void beginKnockSensor5(void);
+void endKnockSensor5(void);
+
 /*
 #ifndef USE_MC33810
 #define openInjector1() *inj1_pin_port |= (inj1_pin_mask); BIT_SET(currentStatus.status1, BIT_STATUS1_INJ1)
