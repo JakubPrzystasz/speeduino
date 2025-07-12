@@ -46,6 +46,16 @@ byte checkRevLimit(void)
         BIT_SET(currentStatus.engineProtectStatus, ENGINE_PROTECT_BIT_RPM);
       } 
     }
+    else if(configPage9.hardRevMode == HARD_REV_OIL)
+    {
+      currentLimitRPM = (int16_t)(table2D_getValue(&coolantProtectTable, currentStatus.OILT + CALIBRATION_TEMPERATURE_OFFSET));
+      if(currentStatus.RPMdiv100 > currentLimitRPM)
+      {
+        BIT_SET(currentStatus.engineProtectStatus, ENGINE_PROTECT_BIT_COOLANT);
+        BIT_SET(currentStatus.status2, BIT_STATUS2_HRDLIM); //Legacy and likely to be removed at some point
+        BIT_SET(currentStatus.engineProtectStatus, ENGINE_PROTECT_BIT_RPM);
+      } 
+    }
   }
 
   return currentLimitRPM;
