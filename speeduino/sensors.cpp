@@ -700,7 +700,7 @@ void readO2_2(void)
 
 void readBat(void)
 {
-  int16_t tempReading = fastMap10Bit(readAnalogSensor(pinBat), 0, 245); //Get the current raw Battery value. Permissible values are from 0v to 24.5v (245)
+  int16_t tempReading = fastMap10Bit(readAnalogSensor(pinBat), 0, 152); //Get the current raw Battery value. Permissible values are from 0v to 24.5v (245)
 
   //Apply the offset calibration value to the reading
   tempReading += configPage4.batVoltCorrect;
