@@ -21,6 +21,7 @@ A full copy of the license may be found in the projects root directory
 #include "utilities.h"
 #include "unit_testing.h"
 #include "sensors_map_structs.h"
+#include "src/InternalTemperature/InternalTemperature.h"
 
 bool auxIsEnabled;
 
@@ -938,3 +939,7 @@ uint16_t readAuxdigital(uint8_t digitalPin)
   tempReading = digitalRead(digitalPin); 
   return tempReading;
 } 
+
+void readCPUTemp(void){
+  currentStatus.cpu_temp = (uint16_t)(InternalTemperature.readTemperatureC());
+}

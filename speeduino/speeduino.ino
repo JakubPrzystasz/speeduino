@@ -302,6 +302,7 @@ void __attribute__((always_inline)) loop(void)
       readBat();
       readOILT();
       nitrousControl();
+      readCPUTemp();
 
       //Lookup the current target idle RPM. This is aligned with coolant and so needs to be calculated at the same rate CLT is read
       if( (configPage2.idleAdvEnabled >= 1) || (configPage6.iacAlgorithm != IAC_ALGORITHM_NONE) )

@@ -53,6 +53,8 @@ void readO2(void);
 void readBat(void);
 void readBaro(void);
 
+void readCPUTemp(void);
+
 /** @brief Initialize the MAP calculation & Baro values */
 void initialiseMAPBaro(void);
 void resetMAPcycleAndEvent(void);

@@ -189,6 +189,8 @@ byte getTSLogEntry(uint16_t byteNum)
     case 142: statusValue = highByte(currentStatus.knockLevel5); break; 
     case 143: statusValue = lowByte(currentStatus.knockWindowDuration); break; 
     case 144: statusValue = highByte(currentStatus.knockWindowDuration); break;
+    case 145: statusValue = lowByte(currentStatus.cpu_temp); break;
+    case 146: statusValue = highByte(currentStatus.cpu_temp); break;
     default: statusValue = 0; // MISRA check
   }
 

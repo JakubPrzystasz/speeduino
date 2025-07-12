@@ -699,6 +699,7 @@ struct statuses {
   byte outputsStatus;
   byte TS_SD_Status; //TunerStudios SD card status
   byte airConStatus;
+  uint16_t cpu_temp;
   uint16_t knockLevel;
   uint16_t knockLevel1;
   uint16_t knockLevel2;
