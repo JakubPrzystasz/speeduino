@@ -100,7 +100,7 @@ void beginCoil8Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810
 void endCoil8Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810) { coil8StopCharging_DIRECT(); } else { coil8StopCharging_MC33810(); } tachoOutputOff(); }
 
 volatile uint32_t start_time;
-void beginKnockSensor1(void) { start_time = micros(); digitalWrite(INT_HOLD_PIN, HIGH); }
+void beginKnockSensor1(void) { tpic8101_update(); start_time = micros(); digitalWrite(INT_HOLD_PIN, HIGH); }
 void endKnockSensor1(void) { currentStatus.knockWindowDuration = micros() - start_time;  digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel1 = currentStatus.knockLevel = tpic8101_read(); }
 
 void beginKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, HIGH); }

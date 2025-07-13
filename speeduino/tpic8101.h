@@ -154,16 +154,16 @@ inline uint8_t find_integrator_index(uint32_t time_constant_us)
 
 inline void tpic8101_update(void)
 {
-    tpic8101_rev_delta = (tpic8101_last_rev - currentStatus.RPM);
-    if (tpic8101_rev_delta >= 800 || tpic8101_rev_delta <= 800)
+    tpic8101_rev_delta = (int32_t)(tpic8101_last_rev - currentStatus.RPM);
+    if (tpic8101_rev_delta >= 400 || tpic8101_rev_delta <= -400)
     {
-        // Update tau
+        tpic8101_last_rev = currentStatus.RPM;
+        //Update tau
         tpic8101_set_timeconstant(find_integrator_index((angleToTimeMicroSecPerDegree(configPage13.knockWindow) * 0x1999) >> 16));
         // Update gain
         tpic8101_set_gain(configPage13.knockGain);
         // Update freq
         tpic8101_set_filter(configPage13.knockFrequency);
-        tpic8101_last_rev = currentStatus.RPM;
     }
 }
 

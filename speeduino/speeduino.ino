@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "SD_logger.h"
 #include "schedule_calcs.h"
 #include "auxiliaries.h"
+#include "tpic8101.h"
 #include RTC_LIB_H //Defined in each boards .h file
 #include BOARD_H //Note that this is not a real file, it is defined in globals.h. 
 
@@ -237,7 +238,6 @@ void __attribute__((always_inline)) loop(void)
         readO2();
         readO2_2();
       }
-      
       #if defined(NATIVE_CAN_AVAILABLE)
       sendCANBroadcast(30);
       #endif
@@ -1074,6 +1074,8 @@ void __attribute__((always_inline)) loop(void)
         {
           setIgnitionSchedule(ignitionSchedule1, timeOut,
                     currentStatus.dwell + fixedCrankingOverride);
+          timeOut = calculateKnockTimeout(knockSchedule1, knock1StartAngle, channel1IgnDegrees, crankAngle);
+          setKnockSchedule(knockSchedule1, timeOut, angleToTimeMicroSecPerDegree(configPage13.knockWindow));
         }
 #endif
 
@@ -1105,6 +1107,8 @@ void __attribute__((always_inline)) loop(void)
             {
               setIgnitionSchedule(ignitionSchedule2, ignition2StartTime,
                         currentStatus.dwell + fixedCrankingOverride);
+              ignition2StartTime = calculateKnockTimeout(knockSchedule2, knock2StartAngle, channel2IgnDegrees, crankAngle);
+              setKnockSchedule(knockSchedule2, ignition2StartTime, angleToTimeMicroSecPerDegree(configPage13.knockWindow));
             }
         }
 #endif
@@ -1118,6 +1122,8 @@ void __attribute__((always_inline)) loop(void)
             {
               setIgnitionSchedule(ignitionSchedule3, ignition3StartTime,
                         currentStatus.dwell + fixedCrankingOverride);
+              ignition3StartTime = calculateKnockTimeout(knockSchedule3, knock3StartAngle, channel3IgnDegrees, crankAngle);
+              setKnockSchedule(knockSchedule3, ignition3StartTime, angleToTimeMicroSecPerDegree(configPage13.knockWindow));
             }
         }
 #endif
@@ -1131,6 +1137,8 @@ void __attribute__((always_inline)) loop(void)
             {
               setIgnitionSchedule(ignitionSchedule4, ignition4StartTime,
                         currentStatus.dwell + fixedCrankingOverride);
+              ignition4StartTime = calculateKnockTimeout(knockSchedule4, knock4StartAngle, channel4IgnDegrees, crankAngle);
+              setKnockSchedule(knockSchedule4, ignition4StartTime, angleToTimeMicroSecPerDegree(configPage13.knockWindow));
             }
         }
 #endif
@@ -1144,6 +1152,8 @@ void __attribute__((always_inline)) loop(void)
             {
               setIgnitionSchedule(ignitionSchedule5, ignition5StartTime,
                         currentStatus.dwell + fixedCrankingOverride);
+              ignition5StartTime = calculateKnockTimeout(knockSchedule5, knock5StartAngle, channel5IgnDegrees, crankAngle);
+              setKnockSchedule(knockSchedule5, ignition5StartTime, angleToTimeMicroSecPerDegree(configPage13.knockWindow));
             }
         }
 #endif
@@ -1404,6 +1414,14 @@ void calculateIgnitionAngles(uint16_t dwellAngle)
       #if (IGN_CHANNELS >= 5)
       calculateIgnitionAngle(dwellAngle, channel5IgnDegrees, currentStatus.advance, &ignition5EndAngle, &ignition5StartAngle);
       #endif
+      if(KNOCK_MODE_TPIC == configPage10.knock_mode)
+      {
+        calculateKnockAngle(0, configPage13.knockWindow, ignition1EndAngle, &knock1EndAngle, &knock1StartAngle);
+        calculateKnockAngle(0, configPage13.knockWindow, ignition2EndAngle, &knock2EndAngle, &knock2StartAngle);
+        calculateKnockAngle(0, configPage13.knockWindow, ignition3EndAngle, &knock3EndAngle, &knock3StartAngle);
+        calculateKnockAngle(0, configPage13.knockWindow, ignition4EndAngle, &knock4EndAngle, &knock4StartAngle);
+        calculateKnockAngle(0, configPage13.knockWindow, ignition5EndAngle, &knock5EndAngle, &knock5StartAngle);
+      }
       break;
     //6 cylinders
     case 6:

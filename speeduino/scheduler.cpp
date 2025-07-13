@@ -133,17 +133,6 @@ void initialiseSchedulers()
     reset(knockSchedule4);
     reset(knockSchedule5);
 
-  knockSchedule1.pStartCallback = nullCallback;
-  knockSchedule1.pEndCallback = nullCallback;
-  knockSchedule2.pStartCallback = nullCallback;
-  knockSchedule2.pEndCallback = nullCallback;
-  knockSchedule3.pStartCallback = nullCallback;
-  knockSchedule3.pEndCallback = nullCallback;
-  knockSchedule4.pStartCallback = nullCallback;
-  knockSchedule4.pEndCallback = nullCallback;
-  knockSchedule5.pStartCallback = nullCallback;
-  knockSchedule5.pEndCallback = nullCallback;
-
   fuelSchedule1.pStartFunction = nullCallback;
   fuelSchedule1.pEndFunction = nullCallback;
   fuelSchedule2.pStartFunction = nullCallback;
