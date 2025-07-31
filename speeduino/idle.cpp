@@ -6,6 +6,7 @@ A full copy of the license may be found in the projects root directory
 #include "idle.h"
 #include "maths.h"
 #include "timers.h"
+#include "sensors.h"
 #include "src/PID_v1/PID_v1.h"
 
 #define STEPPER_LESS_AIR_DIRECTION() ((configPage9.iacStepperInv == 0) ? STEPPER_BACKWARD : STEPPER_FORWARD)
@@ -14,7 +15,7 @@ A full copy of the license may be found in the projects root directory
 byte idleUpOutputHIGH = HIGH; // Used to invert the idle Up Output 
 byte idleUpOutputLOW = LOW;   // Used to invert the idle Up Output 
 byte idleCounter; //Used for tracking the number of calls to the idle control function
-uint8_t idleTaper;
+uint32_t idleTaper;
 
 struct StepperIdle idleStepper;
 bool idleOn; //Simply tracks whether idle was on last time around
@@ -55,13 +56,89 @@ Currently limited to on/off control and open loop PWM and stepper drive
 */
 integerPID idlePID(&currentStatus.longRPM, &idle_pid_target_value, &idle_cl_target_rpm, configPage6.idleKP, configPage6.idleKI, configPage6.idleKD, DIRECT); //This is the PID object if that algorithm is used. Needs to be global as it maintains state outside of each function call
 
+float Kp = 0.55;
+float Ki = 0.2;
+float Kd = 0.008;
+float Kff = 0.15;
+float integral = 0;
+float previous_error = 0;
+float input_percent = 0;
+const float MIN_PWM_OFFSET = 0.20f; 
+const float HYSTERESIS_BAND = 2.0;
+unsigned long last_time = 0;
+
+const int SENSOR_MIN = 274;
+const int SENSOR_MAX = 836;
+
+void idleDC() {
+  currentStatus.idleTpsADC = analogRead(pinIdleTPS);
+  input_percent = map(currentStatus.idleTpsADC, SENSOR_MIN, SENSOR_MAX, 0, 100);
+  currentStatus.idleTPS = input_percent;
+
+  unsigned long now = millis();
+  float dt = (now - last_time) / 1000.0;
+  float error = currentStatus.idleLoad - input_percent;
+
+  // Hysteresis zone — ignore small error
+  if (abs(error) < HYSTERESIS_BAND) {
+    error = 0;
+    integral = 0;
+  }
+
+  integral += error * dt;
+  float derivative = (error - previous_error) / dt;
+  previous_error = error;
+
+  // Feedforward term
+  float feedforward = Kff * (currentStatus.idleLoad / 100.0f);  // Range 0.0 to Kff
+
+  // PID + feedforward output
+  float output_percent = Kp * error + Ki * integral + Kd * derivative + feedforward * 100.0f;
+  output_percent = constrain(output_percent, -100, 100);
+
+  // Convert to duty cycle (-1.0 to +1.0)
+  float duty = output_percent / 100.0f;
+  if(input_percent < 5.f)
+  {
+    duty = 0;
+  }
+
+  // Determine direction and magnitude
+  uint8_t isPositive = duty >= 0.0f;
+  float absDuty = abs(duty);
+
+  absDuty = constrain(absDuty, 0.0f, 1.0f);
+  if (absDuty < 0.01f) absDuty = 0.0f;
+
+  float adjustedDuty = absDuty;
+
+  if (isPositive && absDuty > 0.0f) {
+    adjustedDuty = MIN_PWM_OFFSET + (1.0f - MIN_PWM_OFFSET) * absDuty;
+    adjustedDuty = constrain(adjustedDuty, MIN_PWM_OFFSET, 1.0f);
+  }
+
+  currentStatus.pwmA = (uint8_t)constrain((isPositive ? adjustedDuty * 255 : 0), 0, 255);
+  currentStatus.pwmB = (uint8_t)constrain((isPositive ? 0 : absDuty * 255), 0, 255);
+
+  if(!configPage6.iacPWMdir)
+  {
+    analogWrite(pinPWM_A, currentStatus.pwmA);
+    analogWrite(pinPWM_B, currentStatus.pwmB);
+  }else{
+    analogWrite(pinPWM_A, currentStatus.pwmB);
+    analogWrite(pinPWM_B, currentStatus.pwmA);
+  }
+
+}
+
+
 //Any common functions associated with starting the Idle
 //Typically this is enabling the PWM interrupt
 static inline void enableIdle(void)
 {
   if( (configPage6.iacAlgorithm == IAC_ALGORITHM_PWM_CL) || (configPage6.iacAlgorithm == IAC_ALGORITHM_PWM_OL) || (configPage6.iacAlgorithm == IAC_ALGORITHM_PWM_OLCL) )
   {
-    IDLE_TIMER_ENABLE();
+    //IDLE_TIMER_ENABLE();
   }
   else if ( (configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_CL) || (configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OL) || (configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OLCL) )
   {
@@ -271,6 +348,12 @@ void initialiseIdle(bool forcehoming)
 
   idleInitComplete = configPage6.iacAlgorithm; //Sets which idle method was initialised
   currentStatus.idleLoad = 0;
+
+  analogWriteFrequency(pinPWM_A, 800);
+  analogWriteFrequency(pinPWM_B, 800);
+
+  analogWrite(pinPWM_A, 0);
+  analogWrite(pinPWM_B, 0);
 }
 
 void initialiseIdleUpOutput(void)
@@ -469,13 +552,13 @@ void idleControl(void)
       }
       else
       {
-        if ( idleTaper < configPage2.idleTaperTime )
+        if ( idleTaper < configPage2.idleTaperTime * 20 )
         {
           //Tapering between cranking IAC value and running
-          currentStatus.idleLoad = map(idleTaper, 0, configPage2.idleTaperTime,\
+          currentStatus.idleLoad = map(idleTaper, 0, configPage2.idleTaperTime * 20,\
           table2D_getValue(&iacCrankDutyTable, currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET),\
           table2D_getValue(&iacPWMTable, currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET));
-          if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_10HZ) ) { idleTaper++; }
+          if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_200HZ) ) { idleTaper++; }
         }
         else
         {
@@ -597,7 +680,7 @@ void idleControl(void)
     
         idle_cl_target_rpm = (uint16_t)currentStatus.CLIdleTarget * 10; //Multiply the byte target value back out by 10
         if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_1HZ) ) { idlePID.SetTunings(configPage6.idleKP, configPage6.idleKI, configPage6.idleKD); } //Re-read the PID settings once per second
-        if((currentStatus.RPM - idle_cl_target_rpm > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.TPS > configPage2.iacTPSlimit)){ //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Histeresis (coming back from high rpm with throttle closed)
+        if((currentStatus.RPM - idle_cl_target_rpm > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.idleTPS > configPage2.iacTPSlimit)){ //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Histeresis (coming back from high rpm with throttle closed)
           idlePID.ResetIntegeral();
         }
         
@@ -629,15 +712,15 @@ void idleControl(void)
         else
         {
           //Standard running
-          if (BIT_CHECK(LOOP_TIMER, BIT_TIMER_10HZ) && (currentStatus.RPM > 0))
+          if (BIT_CHECK(LOOP_TIMER, BIT_TIMER_200HZ) && (currentStatus.RPM > 0))
           {
-            if ( idleTaper < configPage2.idleTaperTime )
+            if ( idleTaper < configPage2.idleTaperTime * 20 )
             {
               //Tapering between cranking IAC value and running
-              idleStepper.targetIdleStep = map(idleTaper, 0, configPage2.idleTaperTime,\
+              idleStepper.targetIdleStep = map(idleTaper, 0, configPage2.idleTaperTime * 20,\
               table2D_getValue(&iacCrankStepsTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3,\
               table2D_getValue(&iacStepTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3);
-              if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_10HZ) ) { idleTaper++; }
+              if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_200HZ) ) { idleTaper++; }
             }
             else
             {
@@ -688,10 +771,10 @@ void idleControl(void)
         }
         else 
         {
-          if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_10HZ) )
+          if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_200HZ) )
           {
             idle_cl_target_rpm = (uint16_t)currentStatus.CLIdleTarget * 10; //Multiply the byte target value back out by 10
-            if( idleTaper < configPage2.idleTaperTime )
+            if( idleTaper < configPage2.idleTaperTime * 20 )
             {
               uint16_t minValue = table2D_getValue(&iacCrankStepsTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3;
               if( idle_pid_target_value < minValue<<2 ) { idle_pid_target_value = minValue<<2; }
@@ -699,7 +782,7 @@ void idleControl(void)
               if( configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OLCL ) { maxValue = table2D_getValue(&iacStepTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3; }
 
               //Tapering between cranking IAC value and running
-              FeedForwardTerm = map(idleTaper, 0, configPage2.idleTaperTime, minValue, maxValue)<<2;
+              FeedForwardTerm = map(idleTaper, 0, configPage2.idleTaperTime * 20, minValue, maxValue)<<2;
               idleTaper++;
               idle_pid_target_value = FeedForwardTerm;
             }
@@ -708,7 +791,7 @@ void idleControl(void)
               //Standard running
               FeedForwardTerm = (table2D_getValue(&iacStepTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3)<<2; //All temps are offset by 40 degrees. Step counts are divided by 3 in TS. Multiply back out here
               //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Hysteresis (coming back from high rpm with throttle closed) 
-              if (((currentStatus.RPM - idle_cl_target_rpm) > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.TPS > configPage2.iacTPSlimit) || lastDFCOValue )
+              if (((currentStatus.RPM - idle_cl_target_rpm) > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.idleTPS > configPage2.iacTPSlimit) || lastDFCOValue )
               {
                 idlePID.ResetIntegeral();
               }
@@ -719,8 +802,8 @@ void idleControl(void)
           PID_computed = idlePID.Compute(true, FeedForwardTerm);
 
           //If DFCO conditions are met keep output from changing
-          if( (currentStatus.TPS > configPage2.iacTPSlimit) || lastDFCOValue
-          || ((configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OLCL) && (idleTaper < configPage2.idleTaperTime)) )
+          if( (currentStatus.idleTPS > configPage2.iacTPSlimit) || lastDFCOValue
+          || ((configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OLCL) && (idleTaper < configPage2.idleTaperTime * 20)) )
           {
             idle_pid_target_value = FeedForwardTerm;
           }
@@ -786,6 +869,8 @@ void idleControl(void)
       IDLE_TIMER_ENABLE();
     }
   }
+
+  idleDC();
 }
 
 

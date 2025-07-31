@@ -707,6 +707,10 @@ struct statuses {
   uint16_t knockLevel4;
   uint16_t knockLevel5;
   uint16_t knockWindowDuration;
+  uint8_t idleTPS;    /**< The current TPS reading (0% - 100%). Is the tpsADC value after the calibration is applied */
+  uint8_t idleTpsADC; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
+  uint8_t pwmA; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
+  uint8_t pwmB; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
 };
 
 /**
@@ -1138,8 +1142,7 @@ struct config9 {
   uint8_t canoutput_param_start_byte[8];
   byte canoutput_param_num_bytes[8];
 
-  byte unused10_110;
-  byte unused10_111;
+  uint16_t idleTpsMin;
   byte egoMAPMax; //needs to be multiplied by 2 to get the proper value
   byte egoMAPMin; //needs to be multiplied by 2 to get the proper value
   byte speeduino_tsCanId:4;         //speeduino TS canid (0-14)
@@ -1484,9 +1487,9 @@ struct config15 {
 
   int8_t rollingProtRPMDelta[4]; // Signed RPM value representing how much below the RPM limit. Divided by 10
   byte rollingProtCutPercent[4];
-  
+  uint16_t idleTpsMax;
   //Bytes 106-255
-  byte Unused15_106_255[150];
+  byte Unused15_108_255[148];
 
 #if defined(CORE_AVR)
   };
@@ -1577,7 +1580,9 @@ extern byte pinSDEnable; //Input for manually enabling SD logging
 extern byte pinAirConComp;    // Air conditioning compressor output
 extern byte pinAirConFan;    // Stand-alone air conditioning fan output
 extern byte pinAirConRequest; // Air conditioning request input
-
+extern byte pinIdleTPS;
+extern byte pinPWM_A;
+extern byte pinPWM_B;
 /* global variables */ // from speeduino.ino
 //#ifndef UNIT_TEST
 

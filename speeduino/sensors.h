@@ -52,6 +52,7 @@ void readOILT(void);
 void readO2(void);
 void readBat(void);
 void readBaro(void);
+void readIdleTPS(); //Allows the option to override the use of the filter
 
 void readCPUTemp(void);
 

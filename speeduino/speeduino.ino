@@ -211,6 +211,7 @@ void __attribute__((always_inline)) loop(void)
         //ADC in free running mode does 1 complete conversion of all 16 channels and then the interrupt is disabled. Every 200Hz we re-enable the interrupt to get another conversion cycle
         BIT_SET(ADCSRA,ADIE); //Enable ADC interrupt
       #endif
+      idleControl(); //Perform any idle related actions. This needs to be run at 10Hz to align with the idle taper resolution of 0.1s
     }
     if(BIT_CHECK(LOOP_TIMER, BIT_TIMER_50HZ)) //50 hertz
     {
@@ -277,7 +278,6 @@ void __attribute__((always_inline)) loop(void)
       BIT_CLEAR(TIMER_mask, BIT_TIMER_10HZ);
       //updateFullStatus();
       checkProgrammableIO();
-      idleControl(); //Perform any idle related actions. This needs to be run at 10Hz to align with the idle taper resolution of 0.1s
       
       // Air conditioning control
       airConControl();

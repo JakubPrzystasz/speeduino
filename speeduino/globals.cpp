@@ -233,6 +233,9 @@ byte pinSDEnable;
 byte pinAirConComp;     // Air conditioning compressor output (See: auxiliaries.ino)
 byte pinAirConFan;    // Stand-alone air conditioning fan output (See: auxiliaries.ino)
 byte pinAirConRequest;  // Air conditioning request input (See: auxiliaries.ino)
+byte pinIdleTPS;
+byte pinPWM_A;
+byte pinPWM_B;
 
 struct statuses currentStatus; /**< The master global "live" status struct. Contains all values that are updated frequently and used across modules */
 struct config2 configPage2;

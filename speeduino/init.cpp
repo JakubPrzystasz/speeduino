@@ -2354,17 +2354,19 @@ void setPinMapping(byte boardID)
       pinStepperStep = 8; //Step pin for DRV8825 driver
       pinStepperEnable = 8; //Enable pin for DRV8825 driver
 
-      pinSpareTemp1 = A16; //spare Analog input 1
-      pinSpareTemp2 = A17;
+      pinTPS = A10; //TPS input pin
+      pinCTPS = A6;   
+      pinIdleTPS = A17;
+      pinPWM_A = 4;
+      pinPWM_B = 5;
+
       pinMAP = A1; //MAP sensor pin
       pinBaro = A6; //Baro sensor pin
       pinBat = A7; //Battery reference voltage pin
-      pinTPS = A10; //TPS input pin
       pinIAT = A0; //IAT sensor pin
       pinCLT = A2; //CLT sensor pin
       pinO2 = A16; //O2 Sensor pin   
       pinFlex = A16; // Flex sensor
-      pinCTPS = A11;
       pinOilPressure = A4;
       pinFuelPressure = A3;
       pinOILT = A5; //OILT sensor pin
@@ -3052,8 +3054,13 @@ void setPinMapping(byte boardID)
   if((pinAirConFan > 0) && ((configPage15.airConEnable) == 1) && ((configPage15.airConFanEnabled) == 1))
   {
     pinMode(pinAirConFan, OUTPUT);
-  }  
-
+  }
+  
+  // DBW
+  pinMode(pinIdleTPS, INPUT_DISABLE);
+  pinMode(pinPWM_A, OUTPUT);
+  pinMode(pinPWM_B, OUTPUT);
+  
   //These must come after the above pinMode statements
   triggerPri_pin_port = portInputRegister(digitalPinToPort(pinTrigger));
   triggerPri_pin_mask = digitalPinToBitMask(pinTrigger);

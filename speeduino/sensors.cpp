@@ -541,7 +541,7 @@ uint32_t getMAPDeltaTime(void) {
 }
 
 // ========================================== TPS ==========================================
-
+void readIdleTPS();
 void readTPS(bool useFilter)
 {
   //Check whether the closed throttle position sensor is active
@@ -942,4 +942,17 @@ uint16_t readAuxdigital(uint8_t digitalPin)
 
 void readCPUTemp(void){
   currentStatus.cpu_temp = (uint16_t)(InternalTemperature.readTemperatureC());
+}
+
+void readIdleTPS()
+{
+  currentStatus.idleTpsADC = fastMap10Bit(readAnalogSensor(pinIdleTPS), 0U, 255U);;
+  uint16_t tempADC = currentStatus.idleTpsADC; //The tempADC value is used in order to allow TunerStudio to recover and redo the TPS calibration if this somehow gets corrupted
+
+  if(configPage15.idleTpsMax > configPage9.idleTpsMin)
+  {
+    //Check that the ADC values fall within the min and max ranges (Should always be the case, but noise can cause these to fluctuate outside the defined range).
+    tempADC = clamp(tempADC, configPage9.idleTpsMin, configPage15.idleTpsMax);
+    currentStatus.idleTPS = map(tempADC, configPage9.idleTpsMin, configPage15.idleTpsMax, 0, 200); //Take the raw TPS ADC value and convert it into a TPS% based on the calibrated values
+  }
 }

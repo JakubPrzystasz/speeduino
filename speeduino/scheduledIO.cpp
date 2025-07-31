@@ -101,19 +101,19 @@ void endCoil8Charge(void) { if(ignitionOutputControl != OUTPUT_CONTROL_MC33810) 
 
 volatile uint32_t start_time;
 void beginKnockSensor1(void) { tpic8101_update(); start_time = micros(); digitalWrite(INT_HOLD_PIN, HIGH); }
-void endKnockSensor1(void) { currentStatus.knockWindowDuration = micros() - start_time;  digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel1 = currentStatus.knockLevel = tpic8101_read(); }
+void endKnockSensor1(void) { currentStatus.knockWindowDuration = micros() - start_time;  digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel1 = currentStatus.knockLevel = tpic8101_read(); if(currentStatus.knockLevel > configPage13.knockThreshold){currentStatus.knockCount++;} }
 
 void beginKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
-void endKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel2 = currentStatus.knockLevel = tpic8101_read(); }
+void endKnockSensor2(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel2 = currentStatus.knockLevel = tpic8101_read(); if(currentStatus.knockLevel > configPage13.knockThreshold){currentStatus.knockCount++;} }
 
 void beginKnockSensor3(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
-void endKnockSensor3(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel3 = currentStatus.knockLevel = tpic8101_read(); }
+void endKnockSensor3(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel3 = currentStatus.knockLevel = tpic8101_read(); if(currentStatus.knockLevel > configPage13.knockThreshold){currentStatus.knockCount++;} }
 
 void beginKnockSensor4(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
-void endKnockSensor4(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel4 = currentStatus.knockLevel = tpic8101_read(); }
+void endKnockSensor4(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel4 = currentStatus.knockLevel = tpic8101_read(); if(currentStatus.knockLevel > configPage13.knockThreshold){currentStatus.knockCount++;} }
 
 void beginKnockSensor5(void) { digitalWrite(INT_HOLD_PIN, HIGH); }
-void endKnockSensor5(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel5 = currentStatus.knockLevel = tpic8101_read(); }
+void endKnockSensor5(void) { digitalWrite(INT_HOLD_PIN, LOW);  currentStatus.knockLevel5 = currentStatus.knockLevel = tpic8101_read(); if(currentStatus.knockLevel > configPage13.knockThreshold){currentStatus.knockCount++;} }
 
 
 //The below 3 calls are all part of the rotary ignition mode
