@@ -192,9 +192,19 @@ byte getTSLogEntry(uint16_t byteNum)
     case 145: statusValue = lowByte(currentStatus.cpu_temp); break;
     case 146: statusValue = highByte(currentStatus.cpu_temp); break;
     case 147: statusValue = currentStatus.idleTPS; break;
-    case 148: statusValue = currentStatus.idleTpsADC; break;
-    case 149: statusValue = currentStatus.pwmA; break;
-    case 150: statusValue = currentStatus.pwmB; break;
+    case 148: statusValue = lowByte(currentStatus.idleTpsADC); break;
+    case 149: statusValue = highByte(currentStatus.idleTpsADC); break;
+    case 150: statusValue = currentStatus.pwmA; break;
+    case 151: statusValue = currentStatus.pwmB; break;
+    case 152: statusValue = currentStatus.CTPSActive; break;
+    case 153: statusValue = lowByte(currentStatus.debugVal1); break;
+    case 154: statusValue = highByte(currentStatus.debugVal1); break;
+    case 155: statusValue = lowByte(currentStatus.debugVal2); break;
+    case 156: statusValue = highByte(currentStatus.debugVal2); break;
+    case 157: statusValue = lowByte(currentStatus.debugVal3); break;
+    case 158: statusValue = highByte(currentStatus.debugVal3); break;
+    case 159: statusValue = lowByte(currentStatus.debugVal4); break;
+    case 160: statusValue = highByte(currentStatus.debugVal4); break;
     default: statusValue = 0; // MISRA check
   }
 

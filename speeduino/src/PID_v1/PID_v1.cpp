@@ -291,6 +291,62 @@ bool integerPID::Compute(bool pOnE, long FeedForwardTerm)
    return false;
 }
 
+bool integerPID::ComputePWM(bool pOnE, long FeedForwardTerm)
+{
+   if(!inAuto) return false;
+   unsigned long now = millis();
+   unsigned long timeChange = (now - lastTime);
+   if(timeChange >= SampleTime)
+   {
+      /*Compute all the working error variables*/
+	   long input = *myInput;
+      {
+         long error = *mySetpoint - input;
+         long dInput = (input - lastInput);
+         FeedForwardTerm <<= PID_SHIFTS;
+
+         if (ki != 0)
+         {
+            outputSum += (ki * error); //integral += error × dt
+            if(outputSum > outMax-FeedForwardTerm) { outputSum = outMax-FeedForwardTerm; }
+            else if(outputSum < outMin-FeedForwardTerm) { outputSum = outMin-FeedForwardTerm; }
+         }
+
+         /*Compute PID Output*/
+         long output;
+         
+         if(pOnE)
+         {
+            output = (kp * error);
+            if (ki != 0) { output += outputSum; }
+         }
+         else
+         {
+            outputSum -= (kp * dInput);
+            if(outputSum > outMax) { outputSum = outMax; }
+            else if(outputSum < outMin) { outputSum = outMin; }
+
+            output = outputSum;
+         }
+         if (kd != 0) { output -= (kd * dInput)>>2; }
+         output += FeedForwardTerm;
+
+         if(output > outMax) output = outMax;
+         else if(output < outMin) output = outMin;
+
+         *myOutput = output >> PID_SHIFTS;
+
+         /*Remember some variables for next time*/
+         lastInput = input;
+         lastTime = now;
+
+         return true;
+      }
+   }
+   return false;
+}
+
+
 bool integerPID::ComputeVVT(uint32_t Sample)
 {
    if(!inAuto) return false;

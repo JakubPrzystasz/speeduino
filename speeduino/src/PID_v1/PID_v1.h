@@ -101,6 +101,10 @@ class integerPID
                                           //   called every time loop() cycles. ON/OFF and
                                           //   calculation frequency can be set using SetMode
                                           //   SetSampleTime respectively
+    bool ComputePWM(bool, long FeedForwardTerm = 0);                       // * performs the PID calculation.  it should be
+                                          //   called every time loop() cycles. ON/OFF and
+                                          //   calculation frequency can be set using SetMode
+                                          //   SetSampleTime respectively
     bool Compute2(int, int, bool);
     bool ComputeVVT(uint32_t);
     

@@ -35,6 +35,7 @@ extern bool auxIsEnabled;
 
 void initialiseADC(void);
 void readTPS(bool useFilter=true); //Allows the option to override the use of the filter
+void readIdleTPS();
 void readO2_2(void);
 void flexPulse(void);
 void knockPulse(void);
@@ -52,7 +53,6 @@ void readOILT(void);
 void readO2(void);
 void readBat(void);
 void readBaro(void);
-void readIdleTPS(); //Allows the option to override the use of the filter
 
 void readCPUTemp(void);
 

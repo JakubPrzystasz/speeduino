@@ -708,9 +708,13 @@ struct statuses {
   uint16_t knockLevel5;
   uint16_t knockWindowDuration;
   uint8_t idleTPS;    /**< The current TPS reading (0% - 100%). Is the tpsADC value after the calibration is applied */
-  uint8_t idleTpsADC; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
+  uint16_t idleTpsADC; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
   uint8_t pwmA; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
   uint8_t pwmB; /**< byte (valued: 0-255) representation of the TPS. Downsampled from the original 10-bit (0-1023) reading, but before any calibration is applied */
+  uint16_t debugVal1;
+  uint16_t debugVal2;
+  uint16_t debugVal3;
+  uint16_t debugVal4;
 };
 
 /**
@@ -1488,8 +1492,13 @@ struct config15 {
   int8_t rollingProtRPMDelta[4]; // Signed RPM value representing how much below the RPM limit. Divided by 10
   byte rollingProtCutPercent[4];
   uint16_t idleTpsMax;
-  //Bytes 106-255
-  byte Unused15_108_255[148];
+  uint8_t idlePWMKP;
+  uint8_t idlePWMKI;
+  uint8_t idlePWMKD;
+  uint8_t idlePWMHyst;
+  uint8_t idlePWMFF;
+  //Bytes 111-255
+  byte Unused15_113_255[142];
 
 #if defined(CORE_AVR)
   };

@@ -33,6 +33,12 @@ long FeedForwardTerm;
 unsigned long idle_pwm_target_value;
 long idle_cl_target_rpm;
 
+long pwm_duty;
+long pwm_pid_duty;
+long pwm_tps;
+long pwm_load;
+long pwm_ff;
+
 volatile PORT_TYPE *idle_pin_port;
 volatile PINMASK_TYPE idle_pin_mask;
 volatile PORT_TYPE *idle2_pin_port;
@@ -56,69 +62,41 @@ Currently limited to on/off control and open loop PWM and stepper drive
 */
 integerPID idlePID(&currentStatus.longRPM, &idle_pid_target_value, &idle_cl_target_rpm, configPage6.idleKP, configPage6.idleKI, configPage6.idleKD, DIRECT); //This is the PID object if that algorithm is used. Needs to be global as it maintains state outside of each function call
 
-float Kp = 0.55;
-float Ki = 0.2;
-float Kd = 0.008;
-float Kff = 0.15;
-float integral = 0;
-float previous_error = 0;
-float input_percent = 0;
-const float MIN_PWM_OFFSET = 0.20f; 
-const float HYSTERESIS_BAND = 2.0;
-unsigned long last_time = 0;
+integerPID idlePWMPID(&pwm_tps, &pwm_pid_duty, &pwm_load, configPage15.idlePWMKP, configPage15.idlePWMKI, configPage15.idlePWMKD, DIRECT); //This is the PID object if that algorithm is used. Needs to be global as it maintains state outside of each function call
 
-const int SENSOR_MIN = 274;
-const int SENSOR_MAX = 836;
 
 void idleDC() {
-  currentStatus.idleTpsADC = analogRead(pinIdleTPS);
-  input_percent = map(currentStatus.idleTpsADC, SENSOR_MIN, SENSOR_MAX, 0, 100);
-  currentStatus.idleTPS = input_percent;
+  readIdleTPS();
+  pwm_tps = currentStatus.idleTPS;
+  pwm_load = currentStatus.idleLoad;
 
-  unsigned long now = millis();
-  float dt = (now - last_time) / 1000.0;
-  float error = currentStatus.idleLoad - input_percent;
+  currentStatus.debugVal3 = pwm_tps;
+  currentStatus.debugVal2 = pwm_pid_duty;
 
-  // Hysteresis zone — ignore small error
-  if (abs(error) < HYSTERESIS_BAND) {
-    error = 0;
-    integral = 0;
+  if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_1HZ) ) { idlePWMPID.SetTunings(configPage15.idlePWMKP, configPage15.idlePWMKI, configPage15.idlePWMKD); } //Re-read the PID settings once per second
+
+  if((pwm_tps - pwm_load > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.idleTPS > configPage2.iacTPSlimit)){ //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Histeresis (coming back from high rpm with throttle closed)
+    idlePWMPID.ResetIntegeral();
   }
+  currentStatus.debugVal4 = idlePWMPID.ComputePWM(true, pwm_ff);
 
-  integral += error * dt;
-  float derivative = (error - previous_error) / dt;
-  previous_error = error;
-
-  // Feedforward term
-  float feedforward = Kff * (currentStatus.idleLoad / 100.0f);  // Range 0.0 to Kff
-
-  // PID + feedforward output
-  float output_percent = Kp * error + Ki * integral + Kd * derivative + feedforward * 100.0f;
-  output_percent = constrain(output_percent, -100, 100);
-
-  // Convert to duty cycle (-1.0 to +1.0)
-  float duty = output_percent / 100.0f;
-  if(input_percent < 5.f)
+  if(currentStatus.debugVal4 == true)
   {
-    duty = 0;
+    pwm_duty = pwm_pid_duty;
+    currentStatus.debugVal2 = pwm_pid_duty; 
+    currentStatus.debugVal1++;   
   }
 
-  // Determine direction and magnitude
-  uint8_t isPositive = duty >= 0.0f;
-  float absDuty = abs(duty);
-
-  absDuty = constrain(absDuty, 0.0f, 1.0f);
-  if (absDuty < 0.01f) absDuty = 0.0f;
-
-  float adjustedDuty = absDuty;
-
-  if (isPositive && absDuty > 0.0f) {
-    adjustedDuty = MIN_PWM_OFFSET + (1.0f - MIN_PWM_OFFSET) * absDuty;
-    adjustedDuty = constrain(adjustedDuty, MIN_PWM_OFFSET, 1.0f);
+  if(currentStatus.idleTPS < 3 && currentStatus.idleLoad < 1)
+  {
+    pwm_duty = 0;
   }
 
-  currentStatus.pwmA = (uint8_t)constrain((isPositive ? adjustedDuty * 255 : 0), 0, 255);
-  currentStatus.pwmB = (uint8_t)constrain((isPositive ? 0 : absDuty * 255), 0, 255);
+  uint8_t is_positive = pwm_duty >= 0;
+  float abs_duty = constrain(abs((float)pwm_duty / 100.0f), 0.0f, 1.0f); 
+
+  currentStatus.pwmA = (uint8_t)constrain((is_positive ? abs_duty * 255 : 0), 0, 255);
+  currentStatus.pwmB = (uint8_t)constrain((is_positive ? 0 : abs_duty * 255), 0, 255);
 
   if(!configPage6.iacPWMdir)
   {
@@ -349,11 +327,23 @@ void initialiseIdle(bool forcehoming)
   idleInitComplete = configPage6.iacAlgorithm; //Sets which idle method was initialised
   currentStatus.idleLoad = 0;
 
-  analogWriteFrequency(pinPWM_A, 800);
-  analogWriteFrequency(pinPWM_B, 800);
+  analogWriteFrequency(pinPWM_A, configPage6.idleFreq * 4);
+  analogWriteFrequency(pinPWM_B, configPage6.idleFreq * 4);
 
   analogWrite(pinPWM_A, 0);
   analogWrite(pinPWM_B, 0);
+
+  pwm_duty = 0;
+  pwm_pid_duty = 0;
+  pwm_tps = 0;
+  pwm_load = 0;
+  pwm_ff = configPage15.idlePWMFF;
+  idlePWMPID.SetSampleTime(2);
+  idlePWMPID.SetOutputLimits(-100, 100);
+  idlePWMPID.SetTunings(configPage15.idlePWMKP, configPage15.idlePWMKI, configPage15.idlePWMKD);
+  idlePWMPID.SetMode(AUTOMATIC); //Turn PID on
+  pwm_pid_duty = 0;
+  idlePWMPID.Initialize();
 }
 
 void initialiseIdleUpOutput(void)
@@ -680,7 +670,7 @@ void idleControl(void)
     
         idle_cl_target_rpm = (uint16_t)currentStatus.CLIdleTarget * 10; //Multiply the byte target value back out by 10
         if( BIT_CHECK(LOOP_TIMER, BIT_TIMER_1HZ) ) { idlePID.SetTunings(configPage6.idleKP, configPage6.idleKI, configPage6.idleKD); } //Re-read the PID settings once per second
-        if((currentStatus.RPM - idle_cl_target_rpm > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.idleTPS > configPage2.iacTPSlimit)){ //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Histeresis (coming back from high rpm with throttle closed)
+        if((currentStatus.RPM - idle_cl_target_rpm > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.TPS > configPage2.iacTPSlimit)){ //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Histeresis (coming back from high rpm with throttle closed)
           idlePID.ResetIntegeral();
         }
         
@@ -791,7 +781,7 @@ void idleControl(void)
               //Standard running
               FeedForwardTerm = (table2D_getValue(&iacStepTable, (currentStatus.coolant + CALIBRATION_TEMPERATURE_OFFSET)) * 3)<<2; //All temps are offset by 40 degrees. Step counts are divided by 3 in TS. Multiply back out here
               //reset integral to zero when TPS is bigger than set value in TS (opening throttle so not idle anymore). OR when RPM higher than Idle Target + RPM Hysteresis (coming back from high rpm with throttle closed) 
-              if (((currentStatus.RPM - idle_cl_target_rpm) > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.idleTPS > configPage2.iacTPSlimit) || lastDFCOValue )
+              if (((currentStatus.RPM - idle_cl_target_rpm) > configPage2.iacRPMlimitHysteresis*10) || (currentStatus.TPS > configPage2.iacTPSlimit) || lastDFCOValue )
               {
                 idlePID.ResetIntegeral();
               }
@@ -802,7 +792,7 @@ void idleControl(void)
           PID_computed = idlePID.Compute(true, FeedForwardTerm);
 
           //If DFCO conditions are met keep output from changing
-          if( (currentStatus.idleTPS > configPage2.iacTPSlimit) || lastDFCOValue
+          if( (currentStatus.TPS > configPage2.iacTPSlimit) || lastDFCOValue
           || ((configPage6.iacAlgorithm == IAC_ALGORITHM_STEP_OLCL) && (idleTaper < configPage2.idleTaperTime * 20)) )
           {
             idle_pid_target_value = FeedForwardTerm;
@@ -866,7 +856,7 @@ void idleControl(void)
     else
     {
       BIT_SET(currentStatus.status2, BIT_STATUS2_IDLE); //Turn the idle control flag on
-      IDLE_TIMER_ENABLE();
+      //IDLE_TIMER_ENABLE();
     }
   }
 

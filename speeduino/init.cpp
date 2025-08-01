@@ -2799,8 +2799,14 @@ void setPinMapping(byte boardID)
   pinIdleUpOutput = pinTranslate(configPage2.idleUpOutputPin);
 
   //Currently there's no default pin for closed throttle position sensor
-  pinCTPS = pinTranslate(configPage2.CTPSPin);
+  //pinCTPS = pinTranslate(configPage2.CTPSPin);
   
+  currentStatus.debugVal1 = 0;
+  currentStatus.debugVal2 = 0;
+  currentStatus.debugVal3 = 0;
+  currentStatus.debugVal4 = 0;
+
+
   // Air conditioning control initialisation
   if ((configPage15.airConCompPin != 0) && (configPage15.airConCompPin < BOARD_MAX_IO_PINS) ) { pinAirConComp = pinTranslate(configPage15.airConCompPin); }
   if ((configPage15.airConFanPin != 0) && (configPage15.airConFanPin < BOARD_MAX_IO_PINS) ) { pinAirConFan = pinTranslate(configPage15.airConFanPin); }
